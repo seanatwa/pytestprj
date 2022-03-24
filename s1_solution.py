@@ -48,14 +48,12 @@ top_result_ctr = [
 ]
 
 
-''' 
 ###################################
-Native solution 1
-assumptions:
-  - lists are not too big
-  - No two 0 hit in the click data
+# Native solution 1
+# assumptions:
+#   - lists are not too big
+#   - No two 0 hit in the click data
 ################################### 
-'''
 def calculate_crt_single_site(aClicks):
   search_hit = 0
   for c in aClicks:
@@ -94,12 +92,11 @@ def compute_ctr_1(aSearches, aClicks):  # assume O(m), O(n), result 0(m*(n+m)) =
 assert top_result_ctr == compute_ctr_1(searches, clicks)
 
 
-'''
+
 ###################################
-Native solution 2
-same as solution 1, but more compact with list comprehanstion
+# Native solution 2
+# ame as solution 1, but more compact with list comprehanstion
 ################################### 
-'''
 def calculate_crt_by_searchid(aClicks, aSearchIDs):
   search_hit = 0
   for c in aClicks:
@@ -135,15 +132,58 @@ def compute_ctr_2(aSearches, aClicks):
 assert top_result_ctr == compute_ctr_2(searches, clicks)
 
 
-'''
 ###################################
-Pandas solution 1
+# Pandas solution 3: named aggregation
 ###################################
-'''
-# solution of SQL
-# solution of ph.merge
+import pandas as pd
+
+def compute_ctr_3(aSearches, aClicks): 
+  df_site_search_clicks = pd.merge(pd.DataFrame(aSearches), pd.DataFrame(aClicks), 
+                                   how='left', 
+                                   on = 'search_id')
+  
+  df_site_state = df_site_search_clicks.groupby(["site_id"]).agg(
+    n_top_hit = pd.NamedAgg(column = 'position',
+                            aggfunc = lambda x: sum(x==0)),
+    n_search = pd.NamedAgg(column = 'search_id',
+                           aggfunc = lambda x: x.nunique()),
+  )
+  df_site_state.reset_index(inplace=True)
+  df_site_state['ctr'] = df_site_state['n_top_hit']/df_site_state['n_search']
+  
+  return [{'site_id': row['site_id'], 'pct': row['ctr']}
+          for idx, row in df_site_state.iterrows()]
+
+assert top_result_ctr == compute_ctr_3(searches, clicks)
 
 
+
+###################################
+# Pandas solution 4: merge and sql
+###################################
+import sqldf
+def compute_ctr_4(aSearches, aClicks): 
+  df_site_search_clicks = pd.merge(pd.DataFrame(aSearches), pd.DataFrame(aClicks), 
+                                   how='left', 
+                                   on = 'search_id')
+  query = """
+          SELECT site_id
+            , sum(case when position = 0 then 1 else 0 end) AS hit
+            , count(distinct search_id) AS ct_query
+            , sum(case when position = 0 then 1 else 0 end)*1.0/count(distinct search_id)  AS ctr
+          FROM df_site_search_clicks
+          GROUP BY site_id;
+          """
+  ret = sqldf.run(query)
+  return [{'site_id': row['site_id'], 'pct': row['ctr']}
+          for idx, row in ret.iterrows()]
+
+
+assert top_result_ctr == compute_ctr_4(searches, clicks)
+
+
+
+''' Test cases
 # Clicked position 0 and only position 0
 searches = [{"search_id": 0, "site_id": 0}]
 clicks = [{"search_id": 0, "position": 0}]
@@ -212,3 +252,4 @@ input_click = [{"search_id": 0, "position": 0},
                {"search_id": 1, "position": 4},
               ] 
 assert expected_top_result_ctr == compute_ctr(input_search, input_click)) 
+'''
