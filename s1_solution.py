@@ -49,6 +49,34 @@ top_result_ctr = [
 
 
 ###################################
+# Native solution 0 (best solution)
+# assumptions:
+#   - lists are not too big
+#   - No two 0 hit in the click data
+################################### 
+from collections import defaultdict
+
+def compute_ctr_0(aSearches, aClicks):  # assume O(m), O(n), result 0(m*n)) 
+  hit_agg = defaultdict(int)
+  for c in aClicks: #O(m)
+    hit_agg[c["search_id"]] = hit_agg[c["search_id"]] + 1 if c["position"] == 0 else 0
+  
+  site_agg = defaultdict(lambda: {'searches': 0, 'hits': 0}) #O(n)
+  for s in aSearch:
+    site_agg[s["site_id"]] = {"searches": 1 + site_agg[s["site_id"]]["searches"],
+                              "hits": hit_agg[s["search_id"]]
+                                      + site_agg[s["site_id"]]["hits"]}
+  return [{'site_id': sk,
+           'pct': sv['hits']/sv['searches']
+          }
+          for sk, sv in site_agg.items()]  
+
+
+assert top_result_ctr == compute_ctr_0(searches, clicks)
+
+
+
+###################################
 # Native solution 1
 # assumptions:
 #   - lists are not too big
