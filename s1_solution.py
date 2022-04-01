@@ -57,7 +57,7 @@ top_result_ctr = [
 from collections import defaultdict
 
 # assume O(m) for aSearches, O(n) for aClicks, n should be < 10*m
-# function: 0(m*n)) 
+# function: 0(m+n)) 
 def compute_ctr_0(aSearches, aClicks):  
   hit_agg = defaultdict(int)
   for c in aClicks: #O(m)
