@@ -56,16 +56,18 @@ top_result_ctr = [
 ################################### 
 from collections import defaultdict
 
-def compute_ctr_0(aSearches, aClicks):  # assume O(m), O(n), result 0(m*n)) 
+# assume O(m) for aSearches, O(n) for aClicks, n should be < 10*m
+# function: 0(m*n)) 
+def compute_ctr_0(aSearches, aClicks):  
   hit_agg = defaultdict(int)
   for c in aClicks: #O(m)
     hit_agg[c["search_id"]] += 1 if c["position"] == 0 else 0
-  #hit_agg[c["search_id"]] + 1 if c["position"] == 0 else 0
-  site_agg = defaultdict(lambda: {'searches': 0, 'hits': 0}) #O(n)
-  for s in aSearch:
-    site_agg[s["site_id"]] = {"searches": 1 + site_agg[s["site_id"]]["searches"],
-                              "hits": hit_agg[s["search_id"]]
-                                      + site_agg[s["site_id"]]["hits"]}
+
+  site_agg = defaultdict(lambda: {'searches': 0, 'hits': 0}) 
+  for s in aSearches:#O(n)
+    site_agg[s["site_id"]]["searches"] += 1
+    site_agg[s["site_id"]]["hits"] += hit_agg[s["search_id"]]
+
   return [{'site_id': sk,
            'pct': sv['hits']/sv['searches']
           }
