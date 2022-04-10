@@ -54,7 +54,7 @@ top_result_ctr = [
 #   - lists are not too big
 #   - No two 0 hit in the click data
 ################################### 
-from collections import defaultdict
+from collections import defaultdict  #https://docs.python.org/3/library/collections.html
 
 # assume O(m) for aSearches, O(n) for aClicks, n should be < 10*m
 # function: 0(m+n)) 
